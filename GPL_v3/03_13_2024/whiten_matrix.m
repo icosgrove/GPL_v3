@@ -1,4 +1,4 @@
-function [sp_whiten,quiet_slate,mu] = whiten_matrix(sp,fac)
+function [sp_whiten,median_slate,mu] = whiten_matrix(sp,fac)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % The function whiten_matrix will produce a vector containing the mean
@@ -23,7 +23,7 @@ end
 
 % Allocate array with same # frequency bins and half the # of time bins
 [sz1,sz2] = size(sp); 
-quiet_slate = zeros(sz1,ceil(sz2/2)+2) + nan; 
+median_slate = zeros(sz1,ceil(sz2/2)+2) + nan; 
 
 
 
@@ -38,23 +38,23 @@ for i = 1:sz1
     
     % Use 'middle energy' indices from base3x to create 'qs'
     % Qs will be a spectrogram with signal-present time bins removed.
-    quiet_slate(i,1:length(ks)) = sp(i,ks); 
+    median_slate(i,1:length(ks)) = sp(i,ks); 
 
 end
 
 % Remove NaN from 'qs'
-sum_qs = sum(quiet_slate);
-quiet_slate = quiet_slate(:,isfinite(sum_qs)); % eliminate NaN columns
+sum_qs = sum(median_slate);
+median_slate = median_slate(:,isfinite(sum_qs)); % eliminate NaN columns
 
 
 
 
 %% Find mean noise level for each frequency bin, mean-reduced spectrogram, and mean-reduced signal-absent space.
 
-[~,sz4] = size(quiet_slate); % number of time bins after base3x removed high/low energy
+[~,sz4] = size(median_slate); % number of time bins after base3x removed high/low energy
 
 % Find the mean of each leftover frequency bins after base3x 
-mu = mean(quiet_slate,2);
+mu = mean(median_slate,2);
 
 % The frequency means are expanded to cover all time bins, and then
 % subtracted from the original spectrogram. Each time bin has the mean
@@ -63,4 +63,4 @@ sp_whiten = sp - fac*(mu*ones(1,sz2));
 
 % Frequency means are subtratced from the columns that they were found in,
 % which leaves a very flat image of signal-absent spectrogram.
-quiet_slate = quiet_slate - fac*mu*ones(1,sz4);
+median_slate = median_slate - fac*mu*ones(1,sz4);
